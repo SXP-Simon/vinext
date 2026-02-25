@@ -553,7 +553,7 @@ describe("next/server shim", () => {
     const { after } = await import(
       "../packages/vinext/src/shims/server.js"
     );
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => { });
     after(() => {
       throw new Error("task failed");
     });
@@ -912,7 +912,7 @@ describe("next/cache shim", () => {
     const { cacheLife } = await import(
       "../packages/vinext/src/shims/cache.js"
     );
-    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => { });
     cacheLife("nonexistent-profile");
     expect(consoleWarn).toHaveBeenCalledWith(
       expect.stringContaining("unknown profile"),
@@ -924,7 +924,7 @@ describe("next/cache shim", () => {
     const { cacheLife } = await import(
       "../packages/vinext/src/shims/cache.js"
     );
-    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => { });
     cacheLife({ revalidate: 3600, expire: 60 });
     expect(consoleWarn).toHaveBeenCalledWith(
       expect.stringContaining("expire must be >= revalidate"),
@@ -1227,8 +1227,8 @@ describe('"use cache" runtime', () => {
     const cached = registerCachedFunction(fn, "test:fn-arg");
 
     // Functions can't be serialized — should execute every time (no caching)
-    await cached(() => {});
-    await cached(() => {});
+    await cached(() => { });
+    await cached(() => { });
     expect(callCount).toBe(2);
   });
 
@@ -1374,14 +1374,14 @@ describe("replyToCacheKey deterministic hashing", () => {
 });
 
 describe("middleware runner", () => {
-  it("findMiddlewareFile finds middleware.ts at project root", async () => {
+  it("findMiddlewareFile finds proxy.ts at project root", async () => {
     const { findMiddlewareFile } = await import(
       "../packages/vinext/src/server/middleware.js"
     );
-    // pages-basic fixture has middleware.ts
+    // pages-basic fixture has proxy.ts
     const result = findMiddlewareFile(FIXTURE_DIR);
     expect(result).not.toBeNull();
-    expect(result).toContain("middleware.ts");
+    expect(result).toContain("proxy.ts");
   });
 
   it("findMiddlewareFile returns null when no middleware exists", async () => {
@@ -4141,7 +4141,7 @@ describe("next/dynamic shim", () => {
       React.createElement(DynComp),
       { onError(err: unknown) { if (err instanceof Error) errors.push(err); } },
     );
-    await stream.allReady.catch(() => {});
+    await stream.allReady.catch(() => { });
     expect(errors.some((e) => e.message === "fail")).toBe(true);
   });
 
@@ -4162,7 +4162,7 @@ describe("next/dynamic shim", () => {
       React.createElement(DynComp),
       { onError(err: unknown) { errors.push(err); } },
     );
-    await stream.allReady.catch(() => {});
+    await stream.allReady.catch(() => { });
     expect(errors.length).toBeGreaterThan(0);
   });
 });
@@ -4423,7 +4423,7 @@ describe("extractMdxOptions", () => {
     const { extractMdxOptions } = await import(
       "../packages/vinext/src/config/next-config.js"
     );
-    const fakeRemarkPlugin = () => {};
+    const fakeRemarkPlugin = () => { };
     const config = {
       webpack: (webpackConfig: any) => {
         webpackConfig.module.rules.push({
@@ -4452,7 +4452,7 @@ describe("extractMdxOptions", () => {
     const { extractMdxOptions } = await import(
       "../packages/vinext/src/config/next-config.js"
     );
-    const fakeRehypePlugin = () => {};
+    const fakeRehypePlugin = () => { };
     const config = {
       webpack: (webpackConfig: any) => {
         webpackConfig.module.rules.push({
@@ -4480,7 +4480,7 @@ describe("extractMdxOptions", () => {
     const { extractMdxOptions } = await import(
       "../packages/vinext/src/config/next-config.js"
     );
-    const fakeRecmaPlugin = () => {};
+    const fakeRecmaPlugin = () => { };
     const config = {
       webpack: (webpackConfig: any) => {
         webpackConfig.module.rules.push({
@@ -4506,7 +4506,7 @@ describe("extractMdxOptions", () => {
     const { extractMdxOptions } = await import(
       "../packages/vinext/src/config/next-config.js"
     );
-    const fakeRemarkPlugin = () => {};
+    const fakeRemarkPlugin = () => { };
     const config = {
       webpack: (webpackConfig: any) => {
         webpackConfig.module.rules.push({
@@ -4588,7 +4588,7 @@ describe("extractMdxOptions", () => {
     const { resolveNextConfig } = await import(
       "../packages/vinext/src/config/next-config.js"
     );
-    const fakeRemarkPlugin = () => {};
+    const fakeRemarkPlugin = () => { };
     const config = await resolveNextConfig({
       webpack: (webpackConfig: any) => {
         webpackConfig.module.rules.push({
@@ -4617,7 +4617,7 @@ describe("next/web-vitals shim", () => {
     );
     expect(typeof useReportWebVitals).toBe("function");
     // Should run without throwing
-    expect(() => useReportWebVitals(() => {})).not.toThrow();
+    expect(() => useReportWebVitals(() => { })).not.toThrow();
   });
 });
 
@@ -6403,7 +6403,7 @@ describe("ViewTransition polyfill behavior", () => {
 
   it("provides a no-op addTransitionType when React lacks it", () => {
     const React = { addTransitionType: undefined };
-    const addTransitionType = React.addTransitionType || function addTransitionType() {};
+    const addTransitionType = React.addTransitionType || function addTransitionType() { };
 
     expect(typeof addTransitionType).toBe("function");
     // Should not throw when called
@@ -6413,7 +6413,7 @@ describe("ViewTransition polyfill behavior", () => {
   it("uses native addTransitionType when React exports it", () => {
     const nativeAddTransitionType = function nativeAddTransitionType(type: string) { return type; };
     const React = { addTransitionType: nativeAddTransitionType };
-    const addTransitionType = React.addTransitionType || function addTransitionType() {};
+    const addTransitionType = React.addTransitionType || function addTransitionType() { };
 
     expect(addTransitionType).toBe(nativeAddTransitionType);
   });
@@ -6488,7 +6488,7 @@ describe("next/head SSR security", () => {
 
   it("rejects disallowed tag types (iframe)", async () => {
     const React = await import("react");
-    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => { });
 
     const html = await collectHeadHTML([
       React.createElement("iframe" as any, { src: "https://evil.com" }),
@@ -6503,7 +6503,7 @@ describe("next/head SSR security", () => {
 
   it("rejects disallowed tag types (object, embed, form)", async () => {
     const React = await import("react");
-    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const consoleWarn = vi.spyOn(console, "warn").mockImplementation(() => { });
 
     const html = await collectHeadHTML([
       React.createElement("object" as any, { data: "https://evil.com" }),

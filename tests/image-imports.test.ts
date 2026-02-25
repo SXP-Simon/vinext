@@ -4,9 +4,9 @@ import vinext from "../packages/vinext/src/index.js";
 import type { Plugin } from "vite";
 
 // ── Helpers ───────────────────────────────────────────────────
-const IMAGES_DIR = path.resolve(import.meta.dirname, "./fixtures/images");
-const PNG_PATH = path.join(IMAGES_DIR, "test-4x3.png");
-const JPG_PATH = path.join(IMAGES_DIR, "test-8x6.jpg");
+const IMAGES_DIR = path.resolve(import.meta.dirname, "./fixtures/images").replace(/\\/g, "/");
+const PNG_PATH = path.join(IMAGES_DIR, "test-4x3.png").replace(/\\/g, "/");
+const JPG_PATH = path.join(IMAGES_DIR, "test-8x6.jpg").replace(/\\/g, "/");
 
 /** Unwrap a Vite plugin hook that may use the object-with-filter format */
 function unwrapHook(hook: any): Function {
