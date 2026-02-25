@@ -14,6 +14,7 @@
  * - Not Found: app/not-found.tsx
  */
 import path from "node:path";
+import { normalizePath } from "../utils/path.js";
 import fs from "node:fs";
 import { glob } from "node:fs/promises";
 
@@ -200,7 +201,7 @@ function discoverSlotSubRoutes(
 
     for (const [subPath, slotPages] of subPathMap) {
       // Convert sub-path segments to URL pattern parts
-      const subSegments = subPath.split(path.sep);
+      const subSegments = normalizePath(subPath).split("/");
       const urlParts: string[] = [];
       const subParams: string[] = [];
       let subIsDynamic = false;
@@ -323,7 +324,8 @@ function fileToAppRoute(
 ): AppRoute | null {
   // Remove the filename (page.tsx or route.ts)
   const dir = path.dirname(file);
-  const segments = dir === "." ? [] : dir.split(path.sep);
+  const normalizedDir = dir === "." ? "" : normalizePath(dir);
+  const segments = normalizedDir === "" ? [] : normalizedDir.split("/");
 
   const params: string[] = [];
   let isDynamic = false;
@@ -426,8 +428,8 @@ function fileToAppRoute(
 
   return {
     pattern: pattern === "/" ? "/" : pattern,
-    pagePath: type === "page" ? path.join(appDir, file) : null,
-    routePath: type === "route" ? path.join(appDir, file) : null,
+    pagePath: type === "page" ? normalizePath(path.join(appDir, file)) : null,
+    routePath: type === "route" ? normalizePath(path.join(appDir, file)) : null,
     layouts,
     templates,
     parallelSlots,
@@ -898,15 +900,13 @@ function computeInterceptTarget(
   }
 
   // Build the target URL segments from baseDir relative to appDir
-  const baseParts = path
-    .relative(appDir, baseDir)
-    .split(path.sep)
+  const baseParts = normalizePath(path.relative(appDir, baseDir))
+    .split("/")
     .filter(Boolean);
 
   // Add the intercept segment and any nested path segments
-  const nestedParts = path
-    .relative(interceptRoot, currentDir)
-    .split(path.sep)
+  const nestedParts = normalizePath(path.relative(interceptRoot, currentDir))
+    .split("/")
     .filter(Boolean);
   const allSegments = [...baseParts, interceptSegment, ...nestedParts];
 
@@ -960,7 +960,7 @@ function findFile(dir: string, name: string): string | null {
   const extensions = [".tsx", ".ts", ".jsx", ".js"];
   for (const ext of extensions) {
     const filePath = path.join(dir, name + ext);
-    if (fs.existsSync(filePath)) return filePath;
+    if (fs.existsSync(filePath)) return normalizePath(filePath);
   }
   return null;
 }

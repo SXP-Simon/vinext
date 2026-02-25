@@ -1,5 +1,6 @@
 import { glob } from "node:fs/promises";
 import path from "node:path";
+import { normalizePath } from "../utils/path.js";
 
 export interface Route {
   /** URL pattern, e.g. "/" or "/about" or "/posts/:id" */
@@ -72,8 +73,8 @@ function fileToRoute(file: string, pagesDir: string): Route | null {
   // Remove extension
   const withoutExt = file.replace(/\.(tsx?|jsx?)$/, "");
 
-  // Convert to URL segments
-  const segments = withoutExt.split(path.sep);
+  // Convert to URL segments using forward slashes (glob returns forward slashes even on Windows)
+  const segments = normalizePath(withoutExt).split("/");
 
   // Handle index files: pages/index.tsx -> /
   const lastSegment = segments[segments.length - 1];
@@ -117,7 +118,7 @@ function fileToRoute(file: string, pagesDir: string): Route | null {
 
   return {
     pattern: pattern === "/" ? "/" : pattern,
-    filePath: path.join(pagesDir, file),
+    filePath: normalizePath(path.join(pagesDir, file)),
     isDynamic,
     params,
   };
