@@ -3,6 +3,7 @@ import { parseAst } from "vite";
 import { pagesRouter, apiRouter, invalidateRouteCache, matchRoute, patternToNextFormat as pagesPatternToNextFormat, type Route } from "./routing/pages-router.js";
 import { appRouter, invalidateAppRouteCache } from "./routing/app-router.js";
 import { createSSRHandler } from "./server/dev-server.js";
+import { normalizePath } from "./utils/path.js";
 import { handleApiRoute } from "./server/api-handler.js";
 import {
   generateRscEntry,
@@ -343,9 +344,10 @@ const IMAGE_EXTS = "png|jpe?g|gif|webp|avif|svg|ico|bmp|tiff?";
  * (node_modules/.pnpm/pkg@ver/node_modules/pkg).
  */
 function getPackageName(id: string): string | null {
-  const nmIdx = id.lastIndexOf("node_modules/");
+  const normalizedId = normalizePath(id);
+  const nmIdx = normalizedId.lastIndexOf("node_modules/");
   if (nmIdx === -1) return null;
-  const rest = id.slice(nmIdx + "node_modules/".length);
+  const rest = normalizedId.slice(nmIdx + "node_modules/".length);
   if (rest.startsWith("@")) {
     // Scoped package: @org/pkg
     const parts = rest.split("/");
@@ -354,8 +356,8 @@ function getPackageName(id: string): string | null {
   return rest.split("/")[0] || null;
 }
 
-/** Absolute path to vinext's shims directory, used by clientManualChunks. */
-const _shimsDir = path.resolve(__dirname, "shims") + "/";
+/** Absolute path to vinext's shims directory, used by clientManualChunks. Always uses forward slashes. */
+const _shimsDir = normalizePath(path.resolve(__dirname, "shims")) + "/";
 
 /**
  * manualChunks function for client builds.
@@ -409,7 +411,8 @@ function clientManualChunks(id: string): string | undefined {
   // vinext shims — small runtime, shared across all pages.
   // Use the absolute shims directory path to avoid matching user files
   // that happen to have "/shims/" in their path.
-  if (id.startsWith(_shimsDir)) {
+  const normalizedId = normalizePath(id);
+  if (normalizedId.startsWith(_shimsDir)) {
     return "vinext";
   }
 
@@ -628,10 +631,10 @@ export default function vinext(options: VinextOptions = {}): Plugin[] {
     // Serialize i18n config for embedding in the server entry
     const i18nConfigJson = nextConfig?.i18n
       ? JSON.stringify({
-          locales: nextConfig.i18n.locales,
-          defaultLocale: nextConfig.i18n.defaultLocale,
-          localeDetection: nextConfig.i18n.localeDetection,
-        })
+        locales: nextConfig.i18n.locales,
+        defaultLocale: nextConfig.i18n.defaultLocale,
+        localeDetection: nextConfig.i18n.localeDetection,
+      })
       : "null";
 
     // Serialize the full resolved config for the production server.
@@ -1622,7 +1625,11 @@ hydrate();
   const plugins: (Plugin | Promise<Plugin[]>)[] = [
     // Resolve tsconfig paths/baseUrl aliases so real-world Next.js repos
     // that use @/*, #/*, or baseUrl imports work out of the box.
-    tsconfigPaths(),
+    tsconfigPaths({
+      root: options.appDir,
+      projects: ["tsconfig.json"],
+      skip: (path: string) => path.includes("node_modules"),
+    }),
     {
       name: "vinext:config",
       enforce: "pre",
@@ -2623,7 +2630,7 @@ hydrate();
 
             // Resolve the absolute path of the image
             const dir = path.dirname(id);
-            const absImagePath = path.resolve(dir, importPath);
+            const absImagePath = normalizePath(path.resolve(dir, importPath));
 
             if (!fs.existsSync(absImagePath)) continue;
 
@@ -3126,7 +3133,7 @@ hydrate();
               const candidate = path.join(distDir, entry);
               if (entry === "client") continue;
               if (fs.statSync(candidate).isDirectory() &&
-                  fs.existsSync(path.join(candidate, "wrangler.json"))) {
+                fs.existsSync(path.join(candidate, "wrangler.json"))) {
                 workerOutDir = candidate;
                 break;
               }

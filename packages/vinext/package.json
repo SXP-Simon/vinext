@@ -47,7 +47,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "prepack": "cp ../../README.md README.md && pnpm run build",
+    "prepack": "node -e \"const fs=require('fs');fs.copyFileSync('../../README.md', './README.md')\" && pnpm run build",
     "dev": "tsc --watch"
   },
   "peerDependencies": {

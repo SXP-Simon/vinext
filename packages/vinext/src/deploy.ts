@@ -58,16 +58,16 @@ export interface DeployOptions {
 
 /** Deploy command flag definitions for util.parseArgs. */
 const deployArgOptions = {
-  help:               { type: "boolean", short: "h", default: false },
-  preview:            { type: "boolean", default: false },
-  env:                { type: "string" },
-  name:               { type: "string" },
-  "skip-build":       { type: "boolean", default: false },
-  "dry-run":          { type: "boolean", default: false },
+  help: { type: "boolean", short: "h", default: false },
+  preview: { type: "boolean", default: false },
+  env: { type: "string" },
+  name: { type: "string" },
+  "skip-build": { type: "boolean", default: false },
+  "dry-run": { type: "boolean", default: false },
   "experimental-tpr": { type: "boolean", default: false },
-  "tpr-coverage":     { type: "string" },
-  "tpr-limit":        { type: "string" },
-  "tpr-window":       { type: "string" },
+  "tpr-coverage": { type: "string" },
+  "tpr-limit": { type: "string" },
+  "tpr-window": { type: "string" },
 } as const;
 
 export function parseDeployArgs(args: string[]) {
@@ -748,7 +748,13 @@ export function buildWranglerDeployArgs(options: Pick<DeployOptions, "preview" |
 }
 
 function runWranglerDeploy(root: string, options: Pick<DeployOptions, "preview" | "env">): string {
-  const wranglerBin = path.join(root, "node_modules", ".bin", "wrangler");
+  const isWin = process.platform === "win32";
+  const wranglerBin = path.join(
+    root,
+    "node_modules",
+    ".bin",
+    isWin ? "wrangler.cmd" : "wrangler",
+  );
 
   const execOpts: ExecSyncOptions = {
     cwd: root,

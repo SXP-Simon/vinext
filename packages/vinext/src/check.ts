@@ -7,6 +7,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { normalizePath } from "./utils/path.js";
 
 // ── Support status definitions ─────────────────────────────────────────────
 
@@ -156,7 +157,7 @@ export function scanImports(root: string): CheckItem[] {
         // Normalize: next/font/google -> next/font/google
         const normalized = mod === "next" ? "next" : mod;
         if (!importUsage.has(normalized)) importUsage.set(normalized, []);
-        const relFile = path.relative(root, file);
+        const relFile = normalizePath(path.relative(root, file));
         if (!importUsage.get(normalized)!.includes(relFile)) {
           importUsage.get(normalized)!.push(relFile);
         }
@@ -312,13 +313,17 @@ export function checkConventions(root: string): CheckItem[] {
   const hasMiddleware = fs.existsSync(path.join(root, "middleware.ts")) || fs.existsSync(path.join(root, "middleware.js"));
 
   if (hasPages) {
-    const isSrc = pagesDir!.includes(path.join("src", "pages"));
+    const normalizedPagesDir = normalizePath(pagesDir!);
+    const isSrc = normalizedPagesDir.includes("/src/pages");
     items.push({ name: isSrc ? "Pages Router (src/pages/)" : "Pages Router (pages/)", status: "supported" });
 
     // Count pages
     const pageFiles = findSourceFiles(pagesDir!);
-    const pages = pageFiles.filter(f => !f.includes("/api/") && !f.includes("_app") && !f.includes("_document") && !f.includes("_error"));
-    const apiRoutes = pageFiles.filter(f => f.includes("/api/"));
+    const pages = pageFiles.filter(f => {
+      const normalized = normalizePath(f);
+      return !normalized.includes("/api/") && !normalized.includes("_app") && !normalized.includes("_document") && !normalized.includes("_error");
+    });
+    const apiRoutes = pageFiles.filter(f => normalizePath(f).includes("/api/"));
     items.push({ name: `${pages.length} page(s)`, status: "supported" });
     if (apiRoutes.length) {
       items.push({ name: `${apiRoutes.length} API route(s)`, status: "supported" });
@@ -334,7 +339,8 @@ export function checkConventions(root: string): CheckItem[] {
   }
 
   if (hasApp) {
-    const isSrc = appDirPath!.includes(path.join("src", "app"));
+    const normalizedAppDir = normalizePath(appDirPath!);
+    const isSrc = normalizedAppDir.includes("/src/app");
     items.push({ name: isSrc ? "App Router (src/app/)" : "App Router (app/)", status: "supported" });
 
     const appFiles = findSourceFiles(appDirPath!);
