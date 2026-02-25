@@ -22,6 +22,7 @@ import { runWithRouterState } from "../shims/router-state.js";
 import { runWithHeadState } from "../shims/head-state.js";
 import { reportRequestError } from "./instrumentation.js";
 import { safeJsonStringify } from "./html.js";
+import { normalizePath } from "../utils/path.js";
 import { parseQueryString as parseQuery } from "../utils/query.js";
 import path from "node:path";
 import fs from "node:fs";
@@ -147,7 +148,7 @@ async function streamPageToResponse(
   // Pipe the React body stream through (Suspense content streams progressively)
   const reader = bodyStream.getReader();
   try {
-    for (;;) {
+    for (; ;) {
       const { done, value } = await reader.read();
       if (done) break;
       res.write(value);
@@ -363,7 +364,7 @@ export function createSSRHandler(
 
       // Handle getStaticPaths for dynamic routes: validate the path
       // and respect fallback: false (return 404 for unlisted paths).
-       if (typeof pageModule.getStaticPaths === "function" && route.isDynamic) {
+      if (typeof pageModule.getStaticPaths === "function" && route.isDynamic) {
         const pathsResult = await pageModule.getStaticPaths({
           locales: i18nConfig?.locales ?? [],
           defaultLocale: i18nConfig?.defaultLocale ?? "",
@@ -635,9 +636,9 @@ export function createSSRHandler(
 
       // Convert absolute file paths to Vite-servable URLs (relative to root)
       const viteRoot = server.config.root;
-      const pageModuleUrl = "/" + path.relative(viteRoot, route.filePath);
+      const pageModuleUrl = "/" + normalizePath(path.relative(viteRoot, route.filePath));
       const appModuleUrl = AppComponent
-        ? "/" + path.relative(viteRoot, path.join(pagesDir, "_app"))
+        ? "/" + normalizePath(path.relative(viteRoot, path.join(pagesDir, "_app")))
         : null;
 
       // Hydration entry: inline script that imports the page and hydrates.
@@ -654,18 +655,17 @@ async function hydrate() {
   const pageModule = await import("${pageModuleUrl}");
   const PageComponent = pageModule.default;
   let element;
-  ${
-    appModuleUrl
-      ? `
+  ${appModuleUrl
+          ? `
   const appModule = await import("${appModuleUrl}");
   const AppComponent = appModule.default;
   window.__VINEXT_APP__ = AppComponent;
   element = React.createElement(AppComponent, { Component: PageComponent, pageProps });
   `
-      : `
+          : `
   element = React.createElement(PageComponent, pageProps);
   `
-  }
+        }
   const root = hydrateRoot(document.getElementById("__next"), element);
   window.__VINEXT_ROOT__ = root;
 }
