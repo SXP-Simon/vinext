@@ -34,3 +34,25 @@ declare module "next/headers" {
   export function cookies(): Promise<any>;
   export function draftMode(): Promise<{ isEnabled: boolean }>;
 }
+
+declare module "next/server" {
+  export class NextRequest extends Request {
+    get nextUrl(): any;
+    get cookies(): any;
+    get ip(): string | undefined;
+    get geo(): { city?: string; country?: string; region?: string; latitude?: string; longitude?: string } | undefined;
+  }
+  export class NextResponse<Body = unknown> extends Response {
+    get cookies(): any;
+    static json<T>(body: T, init?: ResponseInit): NextResponse<T>;
+    static redirect(url: string | URL, init?: number | ResponseInit): NextResponse;
+    static rewrite(destination: string | URL, init?: ResponseInit & { request?: { headers: Headers } }): NextResponse;
+    static next(init?: ResponseInit & { request?: { headers: Headers } }): NextResponse;
+  }
+  export function userAgent(req: { headers: Headers }): any;
+  export function userAgentFromString(ua: string | undefined): any;
+  export function after<T>(task: Promise<T> | (() => T | Promise<T>)): void;
+  export function connection(): Promise<void>;
+  export const URLPattern: typeof globalThis.URLPattern;
+  export type NextMiddleware = (request: NextRequest, event: any) => any;
+}
