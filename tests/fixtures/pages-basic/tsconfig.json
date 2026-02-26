@@ -8,8 +8,15 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     }
   },
-  "include": ["pages", "components", "*.ts"]
+  "include": [
+    "pages",
+    "components",
+    "*.ts",
+    "../next-shims.d.ts"
+  ]
 }
