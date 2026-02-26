@@ -749,20 +749,15 @@ export function buildWranglerDeployArgs(options: Pick<DeployOptions, "preview" |
 
 function runWranglerDeploy(root: string, options: Pick<DeployOptions, "preview" | "env">): string {
   const isWin = process.platform === "win32";
-  const wranglerBin = path.join(
-    root,
-    "node_modules",
-    ".bin",
-    isWin ? "wrangler.cmd" : "wrangler",
-  );
+  const cmd = isWin ? "npx.cmd" : "npx";
+  const { args: wranglerArgs, env } = buildWranglerDeployArgs(options);
+  const args = ["wrangler", ...wranglerArgs];
 
   const execOpts: ExecSyncOptions = {
     cwd: root,
     stdio: "pipe",
     encoding: "utf-8",
   };
-
-  const { args, env } = buildWranglerDeployArgs(options);
 
   if (env) {
     console.log(`\n  Deploying to env: ${env}...`);
@@ -772,7 +767,7 @@ function runWranglerDeploy(root: string, options: Pick<DeployOptions, "preview" 
 
   // Use execFileSync to avoid shell injection — args are passed as an array,
   // never interpolated into a shell command string.
-  const output = execFileSync(wranglerBin, args, execOpts) as string;
+  const output = execFileSync(cmd, args, execOpts) as string;
 
   // Parse the deployed URL from wrangler output
   // Wrangler prints: "Published <name> (version_id)\n  https://<name>.<subdomain>.workers.dev"

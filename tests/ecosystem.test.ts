@@ -33,6 +33,8 @@ async function startFixture(
     cwd: root,
     stdio: ["pipe", "pipe", "pipe"],
     env: { ...process.env },
+    // Use a shell to correctly resolve '.cmd' extensions on Windows (e.g. for npx).
+    // Without this, spawn("npx") fails on Windows because npx is not a native executable.
     shell: true,
   });
 

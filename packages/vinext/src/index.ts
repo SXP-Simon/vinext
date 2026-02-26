@@ -665,7 +665,7 @@ ${generateSafeRegExpCode("es5")}
 ${generateMiddlewareMatcherCode("es5")}
 
 export async function runMiddleware(request) {
-  var middlewareFn = middlewareModule.default || middlewareModule.middleware;
+  var middlewareFn = middlewareModule.default || middlewareModule.proxy || middlewareModule.middleware;
   if (typeof middlewareFn !== "function") return { continue: true };
 
   var config = middlewareModule.config;
@@ -1625,11 +1625,7 @@ hydrate();
   const plugins: (Plugin | Promise<Plugin[]>)[] = [
     // Resolve tsconfig paths/baseUrl aliases so real-world Next.js repos
     // that use @/*, #/*, or baseUrl imports work out of the box.
-    tsconfigPaths({
-      root: options.appDir,
-      projects: ["tsconfig.json"],
-      skip: (path: string) => path.includes("node_modules"),
-    }),
+    tsconfigPaths(),
     {
       name: "vinext:config",
       enforce: "pre",

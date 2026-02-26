@@ -218,8 +218,8 @@ declare module "next/server" {
     get cookies(): any;
     static json<T>(body: T, init?: ResponseInit): NextResponse<T>;
     static redirect(url: string | URL, init?: number | ResponseInit): NextResponse;
-    static rewrite(destination: string | URL, init?: ResponseInit): NextResponse;
-    static next(init?: ResponseInit): NextResponse;
+    static rewrite(destination: string | URL, init?: ResponseInit & { request?: { headers: Headers } }): NextResponse;
+    static next(init?: ResponseInit & { request?: { headers: Headers } }): NextResponse;
   }
   export function userAgent(req: { headers: Headers }): any;
   export function userAgentFromString(ua: string | undefined): any;
