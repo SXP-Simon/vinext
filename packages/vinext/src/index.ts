@@ -3,7 +3,7 @@ import { parseAst } from "vite";
 import { pagesRouter, apiRouter, invalidateRouteCache, matchRoute, patternToNextFormat as pagesPatternToNextFormat, type Route } from "./routing/pages-router.js";
 import { appRouter, invalidateAppRouteCache } from "./routing/app-router.js";
 import { createSSRHandler } from "./server/dev-server.js";
-import { normalizePath } from "./utils/path.js";
+import { normalizePath as normalizePathSlashes } from "./utils/path.js";
 import { handleApiRoute } from "./server/api-handler.js";
 import {
   generateRscEntry,
@@ -344,8 +344,9 @@ const IMAGE_EXTS = "png|jpe?g|gif|webp|avif|svg|ico|bmp|tiff?";
  * (node_modules/.pnpm/pkg@ver/node_modules/pkg).
  */
 function getPackageName(id: string): string | null {
-  const normalizedId = normalizePath(id);
-  const nmIdx = normalizedId.lastIndexOf("node_modules/");
+  const normalizedId = normalizePathSlashes(id);
+  const lowerId = normalizedId.toLowerCase();
+  const nmIdx = lowerId.lastIndexOf("node_modules/");
   if (nmIdx === -1) return null;
   const rest = normalizedId.slice(nmIdx + "node_modules/".length);
   if (rest.startsWith("@")) {
@@ -357,7 +358,7 @@ function getPackageName(id: string): string | null {
 }
 
 /** Absolute path to vinext's shims directory, used by clientManualChunks. Always uses forward slashes. */
-const _shimsDir = normalizePath(path.resolve(__dirname, "shims")) + "/";
+const _shimsDir = normalizePathSlashes(path.resolve(__dirname, "shims")) + "/";
 
 /**
  * manualChunks function for client builds.
@@ -411,8 +412,9 @@ function clientManualChunks(id: string): string | undefined {
   // vinext shims — small runtime, shared across all pages.
   // Use the absolute shims directory path to avoid matching user files
   // that happen to have "/shims/" in their path.
-  const normalizedId = normalizePath(id);
-  if (normalizedId.startsWith(_shimsDir)) {
+  // Use case-insensitive comparison for Windows drive letters/paths.
+  const normalizedId = normalizePathSlashes(id);
+  if (normalizedId.toLowerCase().startsWith(_shimsDir.toLowerCase())) {
     return "vinext";
   }
 
@@ -2608,10 +2610,14 @@ hydrate();
           // Defensive guard — duplicates filter logic
           if (id.includes("node_modules")) return null;
           if (id.startsWith("\0")) return null;
-          if (!id.match(/\.(tsx?|jsx?|mjs)$/)) return null;
+          if (!id.match(/\.(tsx?|jsx?|mjs)$/)) {
+            return null;
+          }
 
           const imageImportRe = new RegExp(`import\\s+(\\w+)\\s+from\\s+['"]([^'"]+\\.(${IMAGE_EXTS}))['"];?`, "g");
-          if (!imageImportRe.test(code)) return null;
+          if (!imageImportRe.test(code)) {
+            return null;
+          }
 
           imageImportRe.lastIndex = 0;
 
@@ -2626,7 +2632,7 @@ hydrate();
 
             // Resolve the absolute path of the image
             const dir = path.dirname(id);
-            const absImagePath = normalizePath(path.resolve(dir, importPath));
+            const absImagePath = normalizePathSlashes(path.resolve(dir, importPath));
 
             if (!fs.existsSync(absImagePath)) continue;
 
