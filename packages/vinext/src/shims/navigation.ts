@@ -210,11 +210,21 @@ function notifyListeners(): void {
   for (const fn of _listeners) fn();
 }
 
-// Cached URLSearchParams for referential stability (useSyncExternalStore
-// compares snapshots with Object.is — new URLSearchParams instances are
-// never equal, which would cause infinite re-renders).
+// Cached URLSearchParams, pathname, etc. for referential stability
+// useSyncExternalStore compares snapshots with Object.is — avoid creating
+// new instances on every render (infinite re-renders).
 let _cachedSearch = !isServer ? window.location.search : "";
 let _cachedSearchParams: URLSearchParams = new URLSearchParams(_cachedSearch);
+let _cachedServerSearchParams: URLSearchParams | null = null;
+let _cachedPathname = !isServer ? stripBasePath(window.location.pathname) : "/";
+
+function getPathnameSnapshot(): string {
+  const current = stripBasePath(window.location.pathname);
+  if (current !== _cachedPathname) {
+    _cachedPathname = current;
+  }
+  return _cachedPathname;
+}
 
 function getSearchParamsSnapshot(): URLSearchParams {
   const current = window.location.search;
@@ -225,15 +235,13 @@ function getSearchParamsSnapshot(): URLSearchParams {
   return _cachedSearchParams;
 }
 
-// Same for pathname — cache the string for referential stability
-let _cachedPathname = !isServer ? stripBasePath(window.location.pathname) : "/";
-
-function getPathnameSnapshot(): string {
-  const current = stripBasePath(window.location.pathname);
-  if (current !== _cachedPathname) {
-    _cachedPathname = current;
+function getServerSearchParamsSnapshot(): URLSearchParams {
+  const ctx = _getServerContext();
+  if (ctx?.searchParams != null) return ctx.searchParams;
+  if (_cachedServerSearchParams === null) {
+    _cachedServerSearchParams = new URLSearchParams();
   }
-  return _cachedPathname;
+  return _cachedServerSearchParams;
 }
 
 // Track client-side params (set during RSC hydration/navigation)
@@ -289,7 +297,7 @@ export function useSearchParams(): URLSearchParams {
    return React.useSyncExternalStore(
     (cb: () => void) => { _listeners.add(cb); return () => { _listeners.delete(cb); }; },
     getSearchParamsSnapshot,
-    () => _getServerContext()?.searchParams ?? new URLSearchParams(),
+    getServerSearchParamsSnapshot,
   );
 }
 
