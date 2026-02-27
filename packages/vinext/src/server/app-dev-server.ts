@@ -2845,6 +2845,7 @@ async function main() {
       if (!navResponse) {
         navResponse = await fetch(rscUrl, {
           headers: { Accept: "text/x-component" },
+          credentials: "include",
         });
       }
 
